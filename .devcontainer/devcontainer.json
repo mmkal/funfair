@@ -1,0 +1,6 @@
+{
+    "extensions": [
+        "dbaeumer.vscode-eslint"
+    ],
+    "postCreateCommand": "npm install --global pnpm"
+}
