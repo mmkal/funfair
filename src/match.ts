@@ -17,18 +17,21 @@ type UnionOfCasesDoesNotMatchExpected<InSoFar, In> = {
   _unhandled: Exclude<In, InSoFar>
 }
 
-type Mappable<In, NextIn> = IsNeverOrAny<In> extends 1 ? NextIn : In & NextIn
+type Mappable<In, NextIn> = IsNeverOrAny<In> extends 1 ? NextIn : Extract<In, NextIn>
 
 interface MatcherBuilder<In, InSoFar, Out> {
   case: {
-    <NextIn, MapperIn extends Mappable<In, NextIn>, NextOut>(
-      type: z.ZodType<NextIn>,
-      map: (obj: MapperIn) => NextOut,
-    ): MatcherBuilder<In, InSoFar, Out | NextOut>
+    // refinement overload: no way to identify a refinement type in Zod!
+    // <NextIn, MapperIn extends Mappable<In, NextIn>, NextOut>(
+    //   type: z.ZodType<NextIn>,
+    //   map: (obj: MapperIn) => NextOut,
+    // ): MatcherBuilder<In, InSoFar, Out | NextOut>
+
     <NextIn extends ShorthandInput, NextOut>(
       shorthand: NextIn,
       map: (obj: Mappable<In, Shorthand<NextIn>['_output']>) => NextOut,
     ): MatcherBuilder<In, InSoFar | Shorthand<NextIn>['_output'], Out | NextOut>
+
     <NextIn extends ShorthandInput, NextOut>(
       shorthand: NextIn,
       predicate: (value: Shorthand<NextIn>['_output']) => boolean,
@@ -51,12 +54,19 @@ interface PatternMatchBuilder<Input, InputsCovered, Output> {
     Ready: IsNeverOrAny<Exclude<Input, InputsCovered>>
   }
   case: {
-    <NextIn, NextOut>(type: z.ZodType<NextIn>, map: (obj: Mappable<Input, NextIn>) => NextOut): //
-    PatternMatchBuilder<Input, InputsCovered | NextIn, Output | NextOut> //
+    // refinement overload
+    // <NextIn, NextOut>(
+    // todo: handle refinement types and don't consider them covered
+    //   type: z.ZodRefinement<z.ZodType<NextIn>>,
+    //   map: (obj: Mappable<Input, NextIn>) => NextOut,
+    // ): PatternMatchBuilder<Input, InputsCovered | NextIn, Output | NextOut> //
+
     <NextIn extends ShorthandInput, NextOut>(
       shorthand: NextIn,
       map: (obj: Mappable<Input, Shorthand<NextIn>['_output']>) => NextOut,
     ): PatternMatchBuilder<Input, InputsCovered | Shorthand<NextIn>['_output'], Output | NextOut>
+
+    // with refinement predicate overload
     <NextIn extends ShorthandInput, NextOut>(
       shorthand: NextIn,
       predicate: (value: Shorthand<NextIn>['_output']) => boolean,

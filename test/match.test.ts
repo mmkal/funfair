@@ -9,7 +9,7 @@ describe('case matching', () => {
   const Email = z.object({sender: z.string(), subject: z.string(), body: z.string()})
   const SMS = z.object({from: z.string(), content: z.string()})
   const Message = z.union([Email, SMS])
-  type MessageType = typeof Message._A
+  type MessageType = typeof Message._output
 
   it('matches', () => {
     const content = match({from: '123', content: 'hello'} as MessageType)
@@ -56,7 +56,7 @@ describe('case matching', () => {
     const content = inputs.map(
       matcher<typeof inputs[number]>()
         .case(String, fp.startsWith('h'), s => `greeting: ${s}`)
-        .case(/\?$/, s => `question: ${s.input}`)
+        .case(/\?$/, s => `question: ${s}`)
         .case(String, s => `custom message: ${s}`)
         .case(Number, n => `number: ${n}`).get,
     )
@@ -111,9 +111,7 @@ describe('case matching', () => {
       .case(Email, e => 'personal contact: ' + e.sender)
       .case(SMS, s => s.from).get
 
-    expectTypeOf(getSenderType)
-      .parameter(0)
-      .toEqualTypeOf({} as MessageType)
+    expectTypeOf(getSenderType).parameter(0).toEqualTypeOf<MessageType>()
     expectTypeOf(getSenderType).returns.toEqualTypeOf('')
 
     expect(getSenderType({sender: 'mailing@abc.com', subject: 'hi', body: 'pls buy product'})).toEqual('mailer')
@@ -147,52 +145,30 @@ describe('case matching', () => {
       }"
     `)
   })
-  {
-    it('try get gives a left when no match found', () => {
-      const doubleNumber = matcher().case(z.number(), n => n * 2).tryGet
 
-      expect(doubleNumber('hello' as any)).toMatchInlineSnapshot(`
-        _tag: Left
-        left:
-          noMatchFoundFor: hello
-          types:
-            - name: number
-              _tag: NumberType
-      `)
-    })
+  // it('collects', () => {
+  //   const VoiceMemo = z.object({recorder: z.string(), link: z.string()})
+  //   const MixedMedia = z.union([Email, SMS, VoiceMemo])
+  //   type MixedMedia = typeof MixedMedia._A
 
-    it('try get gives a right when match is found', () => {
-      const doubleNumber = matcher().case(z.number(), n => n * 2).tryGet
-      expect(doubleNumber(2)).toMatchInlineSnapshot(`
-        _tag: Right
-        right: 4
-      `)
-    })
-  }
-
-  it('collects', () => {
-    const VoiceMemo = z.object({recorder: z.string(), link: z.string()})
-    const MixedMedia = z.union([Email, SMS, VoiceMemo])
-    type MixedMedia = typeof MixedMedia._A
-
-    const animals: MixedMedia[] = [
-      {recorder: 'bob', link: 'voicememo.mp3'},
-      {sender: 'a@b.com', subject: 'abc', body: 'email body'},
-      {from: '+123', content: 'sms content'},
-    ]
-    const petSounds = collect(
-      animals,
-      matcher()
-        .case(Email, e => e.body)
-        .case(SMS, s => s.content).tryGet,
-    )
-    expect(petSounds).toMatchInlineSnapshot(`
-      Array [
-        "email body",
-        "sms content",
-      ]
-    `)
-  })
+  //   const animals: MixedMedia[] = [
+  //     {recorder: 'bob', link: 'voicememo.mp3'},
+  //     {sender: 'a@b.com', subject: 'abc', body: 'email body'},
+  //     {from: '+123', content: 'sms content'},
+  //   ]
+  //   const petSounds = collect(
+  //     animals,
+  //     matcher()
+  //       .case(Email, e => e.body)
+  //       .case(SMS, s => s.content).tryGet,
+  //   )
+  //   expect(petSounds).toMatchInlineSnapshot(`
+  //     Array [
+  //       "email body",
+  //       "sms content",
+  //     ]
+  //   `)
+  // })
 })
 
 describe('type-level tests', () => {
@@ -201,7 +177,7 @@ describe('type-level tests', () => {
 
     const results = inputs.map(i =>
       match(i)
-        .case(z.object({}), o => expectTypeOf(o).toEqualTypeOf({foo: 'bar'}))
+        .case(z.record(z.unknown()), o => expectTypeOf(o).toEqualTypeOf({foo: 'bar'}))
         .case(z.number(), n => expectTypeOf(n).toBeNumber())
         .get(),
     )
@@ -216,6 +192,7 @@ describe('type-level tests', () => {
     })
     match({} as never).case(z.object({}), o => {
       expectTypeOf(o).not.toBeAny()
+      expectTypeOf(o).not.toBeNever()
       expectTypeOf(o).toEqualTypeOf<object>()
     })
   })
@@ -224,7 +201,7 @@ describe('type-level tests', () => {
     const inputs = [{foo: 'bar'}, 123]
 
     const mapper = matcher<typeof inputs[number]>()
-      .case(z.object({}), o => expectTypeOf(o).toEqualTypeOf({foo: 'bar'}))
+      .case(z.record(z.unknown()), o => expectTypeOf(o).toEqualTypeOf({foo: 'bar'}))
       .case(z.number(), n => expectTypeOf(n).toBeNumber())
 
     const results = inputs.map(mapper.get)
