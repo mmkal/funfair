@@ -138,8 +138,11 @@ describe('case matching', () => {
         \\"noMatchFoundFor\\": \\"hello\\",
         \\"types\\": [
           {
-            \\"name\\": \\"number\\",
-            \\"_tag\\": \\"NumberType\\"
+            \\"_def\\": {
+              \\"checks\\": [],
+              \\"typeName\\": \\"ZodNumber\\",
+              \\"coerce\\": false
+            }
           }
         ]
       }"
