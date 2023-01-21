@@ -59,7 +59,7 @@ test('literals', () => {
 })
 
 test('objects', () => {
-  expectTypeOf(shorthand(Object)).toEqualTypeOf(z.object())
+  expectTypeOf(shorthand(Object)).toEqualTypeOf(z.object({}).passthrough())
 })
 
 test('complex interfaces', () => {
