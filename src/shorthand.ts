@@ -31,7 +31,7 @@ export type Shorthand<V extends ShorthandInput> = V extends string | number | bo
   : V extends typeof Array
   ? z.ZodArray<z.ZodUnknown>
   : V extends typeof Object
-  ? z.ZodRecord<z.KeySchema, z.ZodUnknown>
+  ? z.ZodRecord<z.ZodString, z.ZodUnknown>
   : V extends RegExp
   ? z.ZodString
   : V extends [ShorthandInput]
@@ -47,7 +47,7 @@ export type Shorthand<V extends ShorthandInput> = V extends string | number | bo
   : V extends z.ZodTypeAny
   ? V
   : V extends Record<string, any>
-  ? z.ZodType<{[K in keyof V]: Shorthand<V[K]>['_output']}>
+  ? z.ZodObject<{[K in keyof V]: Shorthand<V[K]>}>
   : never
 
 export type CodecFromShorthand = {
@@ -98,7 +98,7 @@ export const codecFromShorthand: CodecFromShorthand = (...args: unknown[]): any 
   }
 
   if (v === Object) {
-    return z.object({}).passthrough()
+    return z.record(z.unknown())
   }
 
   if (v === null) {
