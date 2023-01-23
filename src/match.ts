@@ -27,7 +27,7 @@ interface MatcherBuilder<In, InSoFar, Out> {
     //   map: (obj: MapperIn) => NextOut,
     // ): MatcherBuilder<In, InSoFar, Out | NextOut>
 
-    <NextIn extends ShorthandInput, NextOut>(
+    <const NextIn extends ShorthandInput, NextOut>(
       shorthand: NextIn,
       map: (obj: Mappable<In, Shorthand<NextIn>['_output']>) => NextOut,
     ): MatcherBuilder<In, InSoFar | Shorthand<NextIn>['_output'], Out | NextOut>

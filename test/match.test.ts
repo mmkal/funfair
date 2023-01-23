@@ -11,7 +11,7 @@ describe('case matching', () => {
   const Message = z.union([Email, SMS])
   type MessageType = typeof Message._output
 
-  it('matches', () => {
+  test('matches', () => {
     const content = match({from: '123', content: 'hello'} as MessageType)
       .case(SMS, s => s.content)
       .case(Email, e => e.subject + '\n\n' + e.body)
@@ -20,7 +20,7 @@ describe('case matching', () => {
     expect(content).toEqual('hello')
   })
 
-  it('can use shorthand', () => {
+  test('can use shorthand', () => {
     const inputs = ['hi', {message: 'how are you'}, 'hello', 'bonjour', 37, [1, 2] as [number, number]]
     const content = inputs.map(i =>
       match(i)
@@ -50,7 +50,7 @@ describe('case matching', () => {
     `)
   })
 
-  it('can use shorthand with matcher', () => {
+  test('can use shorthand with matcher', () => {
     const inputs = ['hi', 'hello', 'how are you?', `what's going on?`, 'abcdef', 37]
 
     const content = inputs.map(
@@ -73,18 +73,18 @@ describe('case matching', () => {
     `)
   })
 
-  it('can use shorthand with matcher + narrowing', () => {
+  test('can use shorthand with matcher + narrowing', () => {
     type PersonAttributes = {name: string; age: number}
     type Employee = PersonAttributes & {type: 'Employee'; employeeId: string}
     type Customer = PersonAttributes & {type: 'Customer'; orders: string[]}
     type Person = Employee | Customer
 
     matcher<Person>()
-      .case({type: 'Employee'} as const, e => expectTypeOf(e.employeeId).toBeString())
-      .case({type: 'Customer'} as const, e => expectTypeOf(e.orders).toEqualTypeOf<string[]>())
+      .case({type: 'Employee'}, e => expectTypeOf(e.employeeId).toBeString())
+      .case({type: 'Customer'}, e => expectTypeOf(e.orders).toEqualTypeOf<string[]>())
   })
 
-  it('can use default', () => {
+  test('can use default', () => {
     const sound = match<MessageType>({from: '123', content: 'hello'})
       .case(Email, e => e.body)
       .default(JSON.stringify)
@@ -93,7 +93,7 @@ describe('case matching', () => {
     expect(sound).toEqual(`{"from":"123","content":"hello"}`)
   })
 
-  it('can build matchers', () => {
+  test('can build matchers', () => {
     const sound = matcher<MessageType>()
       .case(SMS, s => s.content)
       .case(Email, e => e.body)
@@ -102,7 +102,7 @@ describe('case matching', () => {
     expect(sound).toEqual('hello')
   })
 
-  it('can refine', () => {
+  test('can refine', () => {
     const getSenderType = matcher<MessageType>()
       .case(
         Email.refine(e => e.sender.startsWith('mailing')),
@@ -121,7 +121,7 @@ describe('case matching', () => {
     expect(getSenderType({from: '+123', content: 'hello'})).toEqual('+123')
   })
 
-  it('uses default for matcher', () => {
+  test('uses default for matcher', () => {
     const number = matcher()
       .case(z.boolean(), () => 123)
       .default(Number)
@@ -130,7 +130,7 @@ describe('case matching', () => {
     expect(number).toEqual(456)
   })
 
-  it('throws when no match found', () => {
+  test('throws when no match found', () => {
     const doubleNumber = matcher().case(z.number(), n => n * 2).get
 
     expect(() => doubleNumber('hello' as any)).toThrowErrorMatchingInlineSnapshot(`
@@ -149,7 +149,7 @@ describe('case matching', () => {
     `)
   })
 
-  // it('collects', () => {
+  // test('collects', () => {
   //   const VoiceMemo = z.object({recorder: z.string(), link: z.string()})
   //   const MixedMedia = z.union([Email, SMS, VoiceMemo])
   //   type MixedMedia = typeof MixedMedia._A
