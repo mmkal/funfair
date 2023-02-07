@@ -40,7 +40,7 @@ interface MatcherBuilder<In, InSoFar, Out> {
   }
   default: <NextOut>(map: (obj: In) => NextOut) => MatcherBuilder<In, any, Out | NextOut>
   get: IsNeverOrAny<Exclude<In, InSoFar>> extends 1
-    ? (obj: InSoFar) => Out
+    ? (obj: Extract<In, InSoFar>) => Out
     : UnionOfCasesDoesNotMatchExpected<InSoFar, In>
   //   tryGet: (obj: In) => Hopefully<Out>
 }

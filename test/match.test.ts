@@ -149,6 +149,31 @@ describe('case matching', () => {
     `)
   })
 
+  test('discriminated unions', () => {
+    type SMS = {kind: 'SMS'; content: string}
+    type Email = {kind: 'Email'; subject: string; body: string}
+    type Message = SMS | Email
+
+    const {get} = matcher<Message>()
+      .case({kind: 'SMS'}, sms => sms.content)
+      .case({kind: 'Email'}, email => email.subject + '\n\n' + email.body)
+
+    expect(get({kind: 'SMS', content: 'hello'})).toEqual('hello')
+    expect(get({kind: 'Email', subject: 'Hi', body: 'How are you'})).toEqual('Hi\n\nHow are you')
+  })
+
+  test('discriminated unions - types', () => {
+    type SMS = {kind: 'SMS'; content: string}
+    type Email = {kind: 'Email'; subject: string; body: string}
+    type Message = SMS | Email
+
+    const {get} = matcher<Message>()
+      .case({kind: 'SMS'}, sms => expectTypeOf(sms).toEqualTypeOf<SMS>())
+      .case({kind: 'Email'}, email => expectTypeOf(email).toEqualTypeOf<Email>())
+
+    expectTypeOf(get).toEqualTypeOf<(input: Message) => true>()
+  })
+
   // test('collects', () => {
   //   const VoiceMemo = z.object({recorder: z.string(), link: z.string()})
   //   const MixedMedia = z.union([Email, SMS, VoiceMemo])
